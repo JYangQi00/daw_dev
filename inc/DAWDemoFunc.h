@@ -33,6 +33,7 @@
 #define CAL_PAGE_NUMBER					2		// page number containing the calibration values (referred to 32 Mbit memories)
 
 static long get_time();
+char *time_stamp(); // A formatted time stamp used for naming
 ERROR_CODES OpenConfigFile(FILE **f_ini, char *ConfigFileName);
 ERROR_CODES ParseConfigFile(FILE *f_ini, DAWConfig_t *ConfigVar);
 ERROR_CODES OpenPlotter(DAWConfig_t *ConfigVar, DAWPlot_t *PlotVar);
@@ -45,7 +46,8 @@ int ClosePlotter(FILE **gnuplot);
 void ResetCounter(Counter_t *Counter);
 int UpdateTime(int RefreshTime, uint64_t *PrevRateTime);
 void PrintData(Counter_t *Counter, Counter_t *CounterOld,DAWConfig_t *ConfigVar);
-ERROR_CODES OpenRawFile(FILE **outfile, int BoardIndex, int FileIndex, char *path, char *fname);
+void MakePath(char* base_path, char* run_id);
+ERROR_CODES OpenRawFile(FILE **outfile, int BoardIndex, int FileIndex, char *path, char *fname, char *run_id);
 ERROR_CODES OpenWaveFile(FILE ***outfile, int BoardIndex, DAWBoardConfig_t *BoardConfigVar, char *path, char *fname);
 void WaveWrite(FILE **WaveFile, CAEN_DGTZ_730_DAW_Event_t *Event, DAWBoardConfig_t *BoardConfigVar);
 uint32_t CheckMallocSize(int handle);

@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 extern char path[128];
 
@@ -19,6 +20,19 @@ static long get_time()
 	time_ms = (t1.tv_sec) * 1000 + t1.tv_usec / 1000;
 #endif
 	return time_ms;
+}
+//Jianyang's addition
+char *time_stamp(){
+
+	char *timestamp = (char *)malloc(sizeof(char) * 16);
+	time_t ltime;
+	ltime=time(NULL);
+	struct tm *tm;
+	tm=localtime(&ltime);
+
+	sprintf(timestamp,"%04d%02d%02dT%02d%02d%02d", tm->tm_year+1900, tm->tm_mon+1, 
+		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+	return timestamp;
 }
 
 ERROR_CODES OpenConfigFile(FILE **f_ini, char *ConfigFileName) {
@@ -497,15 +511,33 @@ ERROR_CODES ParseConfigFile(FILE *f_ini, DAWConfig_t *ConfigVar) {
 	return return_code;
 }
 
-ERROR_CODES OpenRawFile(FILE **outfile, int BoardIndex, int FileIndex, char *path, char *fname) {
+void MakePath(char* base_path, char* run_id){
+	char path[600];
+
+	sprintf(path, "%s%s", base_path, run_id);
+	struct stat st = {0};
+
+	printf("\nMaking path %s\n", path);
+
+	if (stat(path, &st)==-1){
+		mkdir(path, 0777);
+	}
+}
+
+ERROR_CODES OpenRawFile(FILE **outfile, int BoardIndex, int FileIndex, char *path, char *fname, char *run_id) {
 	ERROR_CODES return_code = ERR_NONE;
 	char filename[400];
+	
+	//Jianyang's addition of the timestamp to the file
+	char* c_t = time_stamp();
 	struct stat info;
+	
+	printf("Time stamp is %s \n", c_t);
 	if (stat(path, &info) != 0) {
 		printf("path %s cannot be accessed. Please verify that the selected directory exists and is writable\n", path); return ERR_OUTFILE_OPEN;
 	}
 	if (*outfile != NULL) fclose(*outfile);
-	sprintf(filename, "%s%s_raw_b%d_seg%d.bin", path, fname, BoardIndex, FileIndex);
+	sprintf(filename, "%s%s/%s_raw_b%d_seg%d_%s.bin", path, run_id, fname, BoardIndex, FileIndex, c_t);
 	if ((*outfile = fopen(filename, "w")) == NULL) {
 		printf("output file %s could not be created.\n", filename);
 		return_code = ERR_OUTFILE_OPEN;
@@ -979,11 +1011,13 @@ void PrintData(Counter_t *Counter, Counter_t *CounterOld, DAWConfig_t *ConfigVar
 	double TrigRate;
 	if (Counter->ByteCnt == CounterOld->ByteCnt) printf("No data...\n");
 	else {
-		float ElapsedTime = 8 * (float)(Counter->MB_TS - CounterOld->MB_TS) / (float)1000000000.;
+		// printf("Counter time stamp: %f\n", (float)(Counter->MB_TS - CounterOld->MB_TS));
+		// float ElapsedTime = 8 * (float)(Counter->MB_TS - CounterOld->MB_TS) / (float)1000000000.;
+		float ElapsedTime = (float)(Counter->MB_TS - CounterOld->MB_TS) / (float)1000.;
 		RoRate=Counter->ByteCnt!=CounterOld->ByteCnt? (float)(Counter->ByteCnt - CounterOld->ByteCnt) / (ElapsedTime * 1048576):0.;
-		TrigRate = Counter->TrgCnt[ConfigVar->EnableTrack]!=CounterOld->TrgCnt[ConfigVar->EnableTrack] ?(float)(Counter->TrgCnt[ConfigVar->EnableTrack] - CounterOld->TrgCnt[ConfigVar->EnableTrack]) / (ElapsedTime*1000.):0.;
+		// TrigRate = Counter->TrgCnt[ConfigVar->EnableTrack]!=CounterOld->TrgCnt[ConfigVar->EnableTrack] ?(float)(Counter->TrgCnt[ConfigVar->EnableTrack] - CounterOld->TrgCnt[ConfigVar->EnableTrack]) / (ElapsedTime*1000.):0.;
 		printf("Board data rate       : %.2f MB/s\n", RoRate);
-		if(ConfigVar->PlotEnable) printf("Event rate of ch.%*d   : %.2f KHz\n",2,ConfigVar->EnableTrack,TrigRate);
+		// if(ConfigVar->PlotEnable) printf("Event rate of ch.%*d   : %.2f KHz\n",2,ConfigVar->EnableTrack,TrigRate);
 		*CounterOld = *Counter;
 	}
 }
