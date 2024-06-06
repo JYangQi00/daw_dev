@@ -17,7 +17,16 @@ Version 1.3 : Add support to the A4818 Adapter
 DAW_Config.txt : OPEN A4818 0 0 
 
 
-Version 1.4 : Migrate DAW_Demo from c to c++ and new makefile 
+Version 1.4 : Migrate DAW_Demo from c to c++ and new makefile
+
+=== Additions from Jianyang ===
+The primary change is for the dead-time handling. When the event rate gets high, DAW basically cannot take data as the channels will be out of sync with each other. To work around this:
+- In the readout loop, read the "BUSY" flag for each channel
+- If any of the channels are busy, stop data taking
+- Save the current data
+- Mark down the timestamp at which data taking was stopped
+- Restart data taking
+- Mark the timestamp at which data taking was restarted
 
 -----------------------------------------------------------------------------
 
@@ -68,8 +77,7 @@ Version 1.4 : Migrate DAW_Demo from c to c++ and new makefile
 
   Description:
   -----------------------------------------------------------------------------
-
-
+  Takes data using the DAW firmware
 
   Syntax
   -----------------------------------------------------------------------------
