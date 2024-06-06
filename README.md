@@ -19,7 +19,7 @@ DAW_Config.txt : OPEN A4818 0 0
 
 Version 1.4 : Migrate DAW_Demo from c to c++ and new makefile
 
-=== Additions from Jianyang ===
+**Additions from Jianyang**
 
 The primary change is for the dead-time handling. When the event rate gets high, DAW basically cannot take data as the channels will be out of sync with each other. To work around this:
 - In the readout loop, read the "BUSY" flag for each channel
